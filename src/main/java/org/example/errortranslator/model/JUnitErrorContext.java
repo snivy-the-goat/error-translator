@@ -2,7 +2,7 @@ package org.example.errortranslator.model;
 
 /**
  * Data container class that encapsulates the essential debugging context extracted from a failed execution
- * @author Ritvik Garg
+ * @author Ritvik Garg (<a href="https://github.com/the-goat-man">the-goat-man</a>)
  */
 public class JUnitErrorContext {
     /** Name of the class containing the failed test */

@@ -5,7 +5,7 @@ import org.example.errortranslator.interception.JUnitConsoleParserAdapter;
 /**
  * Debugging Test Class
  *
- * @author Ritvik Garg
+ * @author RRitvik Garg (<a href="https://github.com/the-goat-man">the-goat-man</a>)
  */
 public class MainDebug {
     public static void main(String[] args) {

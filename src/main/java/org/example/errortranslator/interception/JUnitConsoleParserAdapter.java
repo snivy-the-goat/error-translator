@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * State-machine console parser that filters real-time standard output stream to intercept, capture, and package JUnit test execution failures.
  *
- * @author Ritvik Garg
+ * @author Ritvik Garg (<a href="https://github.com/the-goat-man">the-goat-man</a>)
  */
 public class JUnitConsoleParserAdapter extends ProcessAdapter {
 

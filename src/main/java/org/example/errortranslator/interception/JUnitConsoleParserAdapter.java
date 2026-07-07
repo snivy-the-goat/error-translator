@@ -102,10 +102,15 @@ public class JUnitConsoleParserAdapter extends ProcessAdapter {
      * @param context The fully-populated error context container
      */
     private void triggerProcessingPipeline(JUnitErrorContext context) {
-        System.out.println("!!! ERROR GRABBED SUCCESSFULLY !!!");
-        System.out.println("Class: " + context.getClassName());
-        System.out.println("Method: " + context.getMethodName());
-        System.out.println("Trace Length: " + context.getFullStackTrace().length());
+        // Instantiate our new translator logic block
+        org.example.errortranslator.analysis.ErrorTranslatorEngine translator =
+                new org.example.errortranslator.analysis.ErrorTranslatorEngine();
+
+        // Generate the polished debugging translation card text
+        String translationCard = translator.generateTranslationCard(context);
+
+        // Print it directly to our simulation output console window tray
+        System.out.println(translationCard);
     }
 
     /**

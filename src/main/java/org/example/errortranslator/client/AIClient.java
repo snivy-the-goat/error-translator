@@ -58,7 +58,6 @@ public class AIClient {
 			                                 .build();
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-			// validate if the web server processed the input cleanly
 			if (response.statusCode() == 200) {
 				return parseResponseField(response.body());
 			} else {
@@ -72,9 +71,11 @@ public class AIClient {
 	}
 
 	/**
+	 * Extracts the AI's output message from the response json and unescapes the
+	 * formatting to properly contain the message
 	 *
-	 * @param json
-	 * @return
+	 * @param json Raw JSON response from the AI
+	 * @return The formatted output message
 	 */
 	private String parseResponseField(String json) {
 		try {

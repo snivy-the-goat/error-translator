@@ -15,9 +15,11 @@ public class ErrorTranslatorEngine {
 	private final AIClient aiClient = new AIClient();
 
 	/**
+	 * Supplies the AI with the user's code and the error's stack trace, and asks it to
+	 * summarize what the error is
 	 *
-	 * @param context
-	 * @return
+	 * @param context THe code and stack trace, bundled into a JUnit Contect object
+	 * @return The AI's summary of why the error is occurring
 	 */
 	public String runErrorEval(JUnitErrorContext context) {
 		/* String systemPrompt = """
@@ -41,12 +43,14 @@ public class ErrorTranslatorEngine {
 	}
 
 	/**
+	 * Supplies the AI with the user's response and the summary of the error, and asks
+	 * it to grade the response
 	 *
-	 * @param studentResponse
-	 * @param errorEval
-	 * @return
+	 * @param userResponse The answer entered by the user
+	 * @param errorEval The summary of the error
+	 * @return The evaluated response, including the integer grade and the AI's reasoning
 	 */
-	public String gradeStudentResponse(String studentResponse, String errorEval) {
+	public String gradeResponse(String userResponse, String errorEval) {
 		/* String systemPrompt = """
 				You are an objective grading classifier.
 				Compare the Student Response against the provided 'Error Eval' truth and assign a score from 1 to 4:
@@ -75,16 +79,17 @@ public class ErrorTranslatorEngine {
 				- DO NOT write Java code snippets.
 				- DO NOT address or teach the student directly.""";
 		String userPrompt = "=== ERROR EVAL TRUTH ===\n" + errorEval + "\n\n" +
-				"=== STUDENT RESPONSE ===\n" + studentResponse;
+				"=== STUDENT RESPONSE ===\n" + userResponse;
 
 		String rawResponse = aiClient.query(systemPrompt, userPrompt);
 		return rawResponse;
 	}
 
 	/**
+	 * Finds the grade assigned to a user's response in an AI output
 	 *
-	 * @param rawOutput
-	 * @return
+	 * @param rawOutput The AI's response
+	 * @return The grade the user received
 	 */
 	public int parseGrade(String rawOutput) {
 		if (rawOutput == null) return 0;

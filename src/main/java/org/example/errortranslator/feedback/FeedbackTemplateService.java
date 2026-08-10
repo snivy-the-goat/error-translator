@@ -10,9 +10,10 @@ import org.example.errortranslator.model.JUnitErrorContext;
 public class FeedbackTemplateService {
 
 	/**
+	 * Constructs the initial message to the user
 	 *
-	 * @param context
-	 * @return
+	 * @param context JUnit Context object containing the error's stack trace
+	 * @return A String containing the initial message
 	 */
 	public String getInitialPrompt(JUnitErrorContext context) {
 		StringBuilder sb = new StringBuilder();

@@ -4,10 +4,16 @@ import org.example.errortranslator.model.JUnitErrorContext;
 
 /**
  * Encapsulates all predefined user-facing prompt templates and static feedback messages.
- * * @author User
+ *
+ * @author Ritvik Garg (<a href="https://github.com/the-goat-man">the-goat-man</a>)
  */
 public class FeedbackTemplateService {
 
+	/**
+	 *
+	 * @param context
+	 * @return
+	 */
 	public String getInitialPrompt(JUnitErrorContext context) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("\n🚨 TEST FAILURE DETECTED 🚨\n");

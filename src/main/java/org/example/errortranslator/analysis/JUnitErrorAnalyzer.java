@@ -15,12 +15,12 @@ public class JUnitErrorAnalyzer {
 	 * @return The file name and line number string in the form "{File.java}:{line_number}"
 	 */
 	public String extractFailureLine(JUnitErrorContext context) {
-		String[] lines = context.getFullStackTrace().split("\n");
+		String[] lines = context.fullStackTrace().split("\n");
 
 		// loop through each stack trace line to find the root test class line
 		for (String line : lines) {
 			// if the line contains given test class name an ignores internal JUnit classes
-			if (line.contains(context.getClassName()) && line.contains(".java")) {
+			if (line.contains(context.className()) && line.contains(".java")) {
 				int openParenthesis = line.indexOf('(');
 				int closeParenthesis = line.indexOf(')');
 
@@ -41,7 +41,7 @@ public class JUnitErrorAnalyzer {
 	 * @return A clean description of the assertion exception statement
 	 */
 	public String extractFailureMessage(JUnitErrorContext context) {
-		String[] lines = context.getFullStackTrace().split("\n");
+		String[] lines = context.fullStackTrace().split("\n");
 
 		// if the stack trace array has at least one  descriptive exception line
 		if (lines.length > 0) {

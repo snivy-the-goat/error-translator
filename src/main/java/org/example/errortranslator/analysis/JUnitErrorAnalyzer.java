@@ -5,7 +5,7 @@ import org.example.errortranslator.model.JUnitErrorContext;
 /**
  * Analyzer responsible for dissecting a captured JUnit error context, extracting key failure metadata, and isolating the root cause line.
  *
- * @author Ritvik Garg (<a href="https://github.com/the-goat-man">the-goat-man</a>)
+ * @author Ritvik Garg (<a href="https://github.com/snivy-the-goat">snivy-the-goat</a>)
  */
 public class JUnitErrorAnalyzer {
 	/**

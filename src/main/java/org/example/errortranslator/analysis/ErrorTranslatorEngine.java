@@ -4,101 +4,73 @@ import org.example.errortranslator.client.AIClient;
 import org.example.errortranslator.model.JUnitErrorContext;
 
 /**
- * Processing engine that converts raw exception signatures into human-readable debugging translations and actionable next steps.
+ * Pedagogical multi-agent engine that generates custom guidance and audits it
+ * using a strict teaching morality rubric.
  *
- * @author Ritvik Garg (<a href="https://github.com/the-goat-man">the-goat-man</a>)
+ * @author Ritvik Garg (<a href="https://github.com/snivy-the-goat">snivy-the-goat</a>)
  */
 public class ErrorTranslatorEngine {
-	/**
-	 * Client to connect and send prompts to the AI.
-	 */
+	/** AI Handler */
 	private final AIClient aiClient = new AIClient();
 
 	/**
-	 * Supplies the AI with the user's code and the error's stack trace, and asks it to
-	 * summarize what the error is
-	 *
-	 * @param context THe code and stack trace, bundled into a JUnit Contect object
-	 * @return The AI's summary of why the error is occurring
+	 * Asks the AI Client to evaluate what caused an error in source code
+	 * @param context An object containing the stack trace and the source code to analyze
+	 * @return The AI's evaluation of what the error is
 	 */
 	public String runErrorEval(JUnitErrorContext context) {
-		/* String systemPrompt = """
-				You are a precise, automated code execution analyzer.
-				Task: Review the provided JUnit stack trace failure and the implementation source code.
-				Output exactly what the issue is in the code. State the line number, what the code is doing wrong, \
-				and what the fix should be. Be hyper-specific to the logic present in the source files.""";
+		String systemPrompt;
+            systemPrompt = """
+                           You are a precise automated code execution analyzer.
+                           Task: Review the provided JUnit stack trace failure and source code.
+                           Output exactly what the issue is, the line number, and the core mistake.""";
 
-		 */
-		String systemPrompt = """
-				You are a precise automated code execution analyzer.
-				Task: Review the provided JUnit stack trace failure and the implementation source code.
-				Output exactly what the issue is in the code. State the line number, what the code is doing wrong, \
-				and what the fix should be. Be hyper-specific to the logic present in the source files.""";
-
-		String userPrompt = "=== FAILED TEST STACK TRACE ===\n" + context.fullStackTrace() + "\n" +
-				"\n" +
+		String userPrompt = "=== FAILED TEST STACK TRACE ===\n" + context.fullStackTrace() + "\n\n" +
 				"=== IMPLEMENTATION SOURCE CODE ===\n" + context.sourceCode();
 
 		return aiClient.query(systemPrompt, userPrompt);
 	}
 
 	/**
-	 * Supplies the AI with the user's response and the summary of the error, and asks
-	 * it to grade the response
 	 *
-	 * @param userResponse The answer entered by the user
-	 * @param errorEval The summary of the error
-	 * @return The evaluated response, including the integer grade and the AI's reasoning
+	 * @param context An object that bundles the stack trace and source code
+	 * @param errorEval The evaluation from the AI
+	 * @param userResponse The answer provided by the user
+	 * @return The advice/help the AI recommends giving to the user to help their understanding
 	 */
-	public String gradeResponse(String userResponse, String errorEval) {
-		/* String systemPrompt = """
-				You are an objective grading classifier.
-				Compare the Student Response against the provided 'Error Eval' truth and assign a score from 1 to 4:
-				
-				1 = Completely Wrong (Unwillingness to try, gibberish, 'idk', or lazy response)
-				2 = Incorrect (Off-base, but putting in visible effort)
-				3 = Partially Correct (Identifies some aspects right, but misses or misinterprets other key details)
-				4 = Accurate (Almost completely or fully correct explanation of the bug)
-				
-				CRITICAL: Output ONLY a single digit integer (1, 2, 3, or 4). Do NOT output any words, labels, or extra text.""";
-		*/
-
+	public String generateMentorResponse(JUnitErrorContext context, String errorEval, String userResponse) {
 		String systemPrompt = """
-				You are an automated grading engine evaluating a student's bug diagnosis.
-				Compare the Student Response against the Ground-Truth Error Eval and assign a score from 1 to 4:
-				
-				RUBRIC DEFINITIONS:
-				1 = Completely Wrong: Unwilling to try, off-topic, gibberish, or gives up (e.g., 'idk', 'i give up').
-				2 = Incorrect: Points to an ENTIRELY WRONG root cause, wrong file, or unrelated issue (e.g., blaming memory limits, network errors, or the test file).
-				3 = Partially Correct: Correctly identifies WHICH function/method is failing or states THAT the function isn't working, BUT misses the exact code mechanism or line-level detail.
-				4 = Accurate: Fully or almost fully explains the exact bug (e.g., 'the add method uses subtraction instead of addition').
-				
-				STRICT OUTPUT RULES:
-				- Line 1 MUST start with 'GRADE: ' followed by a single integer (1, 2, 3, or 4).
-				- Line 2 MUST start with 'EXPLANATION: ' followed by 1 sentence explaining why this grade was chosen.
-				- DO NOT write Java code snippets.
-				- DO NOT address or teach the student directly.""";
-		String userPrompt = "=== ERROR EVAL TRUTH ===\n" + errorEval + "\n\n" +
-				"=== STUDENT RESPONSE ===\n" + userResponse;
+                                      You are an encouraging, expert programming mentor.
+                                      Goal: Write a response to help the user understand the error and figure it out themselves.
+                                      CRITICAL RULES:
+                                      - DO NOT give them the direct answer or write the fixed code snippet.
+                                      - Acknowledge their effort and current explanation.
+                                      - Point them toward the correct file, method, or logic discrepancy using a guiding question.""";
 
-		String rawResponse = aiClient.query(systemPrompt, userPrompt);
-		return rawResponse;
+		String userPrompt = "=== GROUND TRUTH ERROR ===\n" + errorEval + "\n\n" +
+				"=== SOURCE CODE ===\n" + context.sourceCode() + "\n\n" +
+				"=== user'S GUESS ===\n\"" + userResponse + "\"";
+
+		return aiClient.query(systemPrompt, userPrompt);
 	}
 
-	/**
-	 * Finds the grade assigned to a user's response in an AI output
-	 *
-	 * @param rawOutput The AI's response
-	 * @return The grade the user received
-	 */
-	public int parseGrade(String rawOutput) {
-		if (rawOutput == null) return 0;
+	public String auditMentorResponse(String mentorDraft, String errorEval) {
+		String systemPrompt = """
+                                      You are a strict Pedagogical Morality Auditor reviewing an AI mentor's draft.
+                                      Evaluate the draft against this Teaching Rubric:
 
-		for (char c : rawOutput.toCharArray()) {
-			if (c >= '1' && c <= '4') {
-				return Character.getNumericValue(c);
-			}
-		}
-		return 0;
+                                      PEDAGOGICAL RUBRIC:
+                                      - PASS: The response successfully guides the user, encourages learning, points out where to look, AND crucially DOES NOT reveal the explicit code fix or direct answer.
+                                      - FAIL_GAVE_ANSWER: The response spoils the solution by showing fixed code or directly stating the exact code change needed.
+                                      - FAIL_DISCOURAGING: The response is overly harsh, cynical, or unhelpful.
+
+                                      STRICT OUTPUT FORMAT:
+                                      VERDICT: [PASS or FAIL_GAVE_ANSWER or FAIL_DISCOURAGING]
+                                      FEEDBACK: [1 sentence explaining why, or suggestions to rewrite if failed]""";
+
+		String userPrompt = "=== GROUND TRUTH ERROR ===\n" + errorEval + "\n\n" +
+				"=== MENTOR DRAFT TO AUDIT ===\n" + mentorDraft;
+
+		return aiClient.query(systemPrompt, userPrompt);
 	}
 }

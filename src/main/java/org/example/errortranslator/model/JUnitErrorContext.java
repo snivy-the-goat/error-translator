@@ -6,7 +6,7 @@ package org.example.errortranslator.model;
  * @param className      Name of the class containing the failed test.
  * @param methodName     Name of the test method that failed.
  * @param fullStackTrace Complete string buffer containing the failure's stack trace.
- * @author Ritvik Garg (<a href="https://github.com/the-goat-man">the-goat-man</a>)
+ * @author Ritvik Garg (<a href="https://github.com/snivy-the-goat">snivy-the-goat</a>)
  */
 public record JUnitErrorContext(String className, String methodName,
                                 String fullStackTrace, String sourceCode) {

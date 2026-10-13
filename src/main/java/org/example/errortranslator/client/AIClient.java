@@ -1,5 +1,6 @@
 package org.example.errortranslator.client;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -10,7 +11,8 @@ import java.time.Duration;
  * Handles HTTP communication with the AI server backend.
  * Handles request execution Java 11+ HttpClient.
  *
- * @author Ritvik Garg (<a href="https://github.com/the-goat-man">the-goat-man</a>)
+ * @author Ritvik Garg
+ *         (<a href="https://github.com/snivy-the-goat">snivy-the-goat</a>)
  */
 public class AIClient {
 	/**
@@ -27,8 +29,8 @@ public class AIClient {
 	 */
 	public AIClient() {
 		this.httpClient = HttpClient.newBuilder()
-		                            .connectTimeout(Duration.ofSeconds(20))
-		                            .build();
+				.connectTimeout(Duration.ofSeconds(20))
+				.build();
 	}
 
 	/**
@@ -41,21 +43,21 @@ public class AIClient {
 	public String query(String systemPrompt, String userPrompt) {
 		String combinedPrompt = systemPrompt + "\n\nUser Input Context:\n" + userPrompt;
 		String escapedPrompt = combinedPrompt.replace("\\", "\\\\")
-		                                     .replace("\"", "\\\"")
-		                                     .replace("\t", "    ")
-		                                     .replace("\n", "\\n")
-		                                     .replace("\r", "");
+				.replace("\"", "\\\"")
+				.replace("\t", "    ")
+				.replace("\n", "\\n")
+				.replace("\r", "");
 		String jsonPayload = "{\"model\": \"qwen2.5-coder:1.5b\",\"prompt\": \""
 				+ escapedPrompt +
 				"\",\"stream\": false,\"options\": {\"temperature\": 0.1}}";
 
 		try {
 			HttpRequest request = HttpRequest.newBuilder()
-			                                 .uri(URI.create(OLLAMA_ENDPOINT))
-			                                 .header("Content-Type", "application/json")
-			                                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-			                                 .timeout(Duration.ofSeconds(90))
-			                                 .build();
+					.uri(URI.create(OLLAMA_ENDPOINT))
+					.header("Content-Type", "application/json")
+					.POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+					.timeout(Duration.ofSeconds(90))
+					.build();
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
 			if (response.statusCode() == 200) {
@@ -64,7 +66,7 @@ public class AIClient {
 				System.out.println(response.body());
 				return "{\"error\": \"Server returned status code: " + response.statusCode() + "\"}";
 			}
-		} catch (Exception e) {
+		} catch (IOException | InterruptedException e) {
 			return "{\"error\": \"Could not establish a connection to the AI engine " +
 					"backend.\"}";
 		}
@@ -89,8 +91,8 @@ public class AIClient {
 				if (end != -1) {
 					String rawOutput = json.substring(start, end);
 					return rawOutput.replace("\\n", "\n")
-					                .replace("\\\"", "\"")
-					                .replace("\\\\", "\\");
+							.replace("\\\"", "\"")
+							.replace("\\\\", "\\");
 				}
 			}
 			return json;

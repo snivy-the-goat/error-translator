@@ -5,7 +5,7 @@ import org.example.errortranslator.model.JUnitErrorContext;
 /**
  * Encapsulates all predefined user-facing prompt templates and static feedback messages.
  *
- * @author Ritvik Garg (<a href="https://github.com/the-goat-man">the-goat-man</a>)
+ * @author Ritvik Garg (<a href="https://github.com/snivy-the-goat">snivy-the-goat</a>)
  */
 public class FeedbackTemplateService {
 

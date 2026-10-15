@@ -38,18 +38,18 @@ public class AIClient {
 	 *
 	 * @param systemPrompt Instructions containing the AI's persona and restrictions
 	 * @param userPrompt   The context or user input to evaluate
+	 * @param temperature  The creativity of the model's responses
 	 * @return JSON response string from the model
 	 */
-	public String query(String systemPrompt, String userPrompt) {
+	public String query(String systemPrompt, String userPrompt, double temperature) {
 		String combinedPrompt = systemPrompt + "\n\nUser Input Context:\n" + userPrompt;
 		String escapedPrompt = combinedPrompt.replace("\\", "\\\\")
 				.replace("\"", "\\\"")
 				.replace("\t", "    ")
 				.replace("\n", "\\n")
 				.replace("\r", "");
-		String jsonPayload = "{\"model\": \"qwen2.5-coder:1.5b\",\"prompt\": \""
-				+ escapedPrompt +
-				"\",\"stream\": false,\"options\": {\"temperature\": 0.1}}";
+		String jsonPayload = "{\"model\": \"qwen2.5-coder:7b\",\"prompt\": \"" + escapedPrompt
+				+ "\",\"stream\": false,\"options\": {\"temperature\": " + temperature + "}}";
 
 		try {
 			HttpRequest request = HttpRequest.newBuilder()

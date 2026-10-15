@@ -9,33 +9,31 @@ import org.example.errortranslator.model.JUnitErrorContext;
 /**
  * Debugging Test Class running the Mentor + Morality Bot architecture.
  *
- * @author Ritvik Garg (<a href="https://github.com/snivy-the-goat">snivy-the-goat</a>)
+ * @author Ritvik Garg
+ *         (<a href="https://github.com/snivy-the-goat">snivy-the-goat</a>)
  */
 public class MainDebug {
 	public static void main(String[] args) {
 		System.out.println("=== STARTING MENTOR & MORALITY PIPELINE SIMULATION ===");
 
-		String mockSourceCode =
-				"""
-						package org.example;
+		String mockSourceCode = """
+				package org.example;
 
-						public class Calculator {
-						    public int add(int a, int b) {
-						        return a - b; // <-- Bug: Subtracting instead of adding
-						    }
-						}""";
+				public class Calculator {
+				    public int add(int a, int b) {
+				        return a - b; // <-- Bug: Subtracting instead of adding
+				    }
+				}""";
 
-		String mockStackTrace =
-				"""
-                                java.lang.AssertionError: expected:<10> but was:<0>
-                                \tat org.example.CalculatorTest.testAdditionFailure(CalculatorTest.java:14)""";
+		String mockStackTrace = """
+				java.lang.AssertionError: expected:<10> but was:<0>
+				\tat org.example.CalculatorTest.testAdditionFailure(CalculatorTest.java:14)""";
 
 		JUnitErrorContext context = new JUnitErrorContext(
 				"org.example.CalculatorTest",
 				"testAdditionFailure",
 				mockStackTrace,
-				mockSourceCode
-		);
+				mockSourceCode);
 
 		ErrorTranslatorEngine engine = new ErrorTranslatorEngine();
 		FeedbackTemplateService feedbackService = new FeedbackTemplateService();
@@ -60,7 +58,8 @@ public class MainDebug {
 			System.out.println("\n⏳ [Mentor Bot] Crafting personalized coaching response...");
 			String mentorDraft = engine.generateMentorResponse(context, errorEvalResult, userResponse);
 
-			System.out.println("⏳ [Morality Auditor] Auditing pedagogical value and rules...");
+			System.out.println(
+					"⏳ [Morality Auditor] Scoring against 6-category rubric (Directness, Tone, Relevance, Accuracy, Scope, Construction)...");
 			String auditResult = engine.auditMentorResponse(mentorDraft, errorEvalResult);
 
 			System.out.println("\n====================================================");
@@ -68,12 +67,13 @@ public class MainDebug {
 			System.out.println("----------------------------------------------------");
 			System.out.println(mentorDraft.trim());
 			System.out.println("====================================================");
-			System.out.println("🛡️ MORALITY AUDIT VERDICT:");
+			System.out.println("🛡️ 6-CATEGORY MORALITY AUDIT VERDICT:");
 			System.out.println("----------------------------------------------------");
 			System.out.println(auditResult.trim());
 			System.out.println("====================================================\n");
 
-			System.out.println("Would you like to try again or exit? (type 'exit' to quit, or press Enter to keep debugging)");
+			System.out.println(
+					"Would you like to try again or exit? (type 'exit' to quit, or press Enter to keep debugging)");
 			System.out.print("> ");
 			String choice = scanner.nextLine();
 			if (choice.trim().equalsIgnoreCase("exit")) {

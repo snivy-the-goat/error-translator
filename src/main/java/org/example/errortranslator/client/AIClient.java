@@ -15,10 +15,11 @@ import java.time.Duration;
  *         (<a href="https://github.com/snivy-the-goat">snivy-the-goat</a>)
  */
 public class AIClient {
-	/**
-	 * Target endpoint for the local AI engine.
-	 */
-	private static final String OLLAMA_ENDPOINT = "http://localhost:11434/api/generate";
+	/** API Key to access the AI server */
+	private static final String API_KEY = "AQ.Ab8RN6JtJ9mxSVrJdsC74kURcTok_VS4dWm6NlZ6YatTHhyocQ";
+	/** URL to the AI server, including API Key */
+	private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key="
+			+ API_KEY;
 	/**
 	 * Configured HTTP client with timeout rules.
 	 */
@@ -42,62 +43,115 @@ public class AIClient {
 	 * @return JSON response string from the model
 	 */
 	public String query(String systemPrompt, String userPrompt, double temperature) {
-		String combinedPrompt = systemPrompt + "\n\nUser Input Context:\n" + userPrompt;
-		String escapedPrompt = combinedPrompt.replace("\\", "\\\\")
-				.replace("\"", "\\\"")
-				.replace("\t", "    ")
-				.replace("\n", "\\n")
-				.replace("\r", "");
-		String jsonPayload = "{\"model\": \"qwen2.5-coder:7b\",\"prompt\": \"" + escapedPrompt
-				+ "\",\"stream\": false,\"options\": {\"temperature\": " + temperature + "}}";
+        int maxRetries = 3;
+        int attempt = 0;
 
+        while (attempt < maxRetries) {
+            try {
+                String jsonPayload = String.format("""
+                        {
+                          "system_instruction": {
+                            "parts": [{"text": "%s"}]
+                          },
+                          "contents": [{
+                            "parts": [{"text": "%s"}]
+                          }],
+                          "generationConfig": {
+                            "temperature": %.2f
+                          }
+                        }
+                        """, escapeJson(systemPrompt), escapeJson(userPrompt), temperature);
+
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(API_URL))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                        .timeout(Duration.ofSeconds(90))
+                        .build();
+
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+                // Handle temporary 503 server overload with exponential backoff retry
+                if (response.statusCode() == 503 && attempt < maxRetries - 1) {
+                    attempt++;
+                    try {
+                        Thread.sleep(2000L * attempt);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                    continue;
+                }
+
+                if (response.statusCode() == 503) {
+                    return "ERROR: The server is currently experiencing high demand. Please try again later.";
+                }
+
+                if (response.statusCode() == 200) {
+                    return parseGeminiResponse(response.body());
+                } else {
+                    return "ERROR: An unexpected error occurred while communicating with the AI service. Code: " + response.statusCode() + ". Please try again later.";
+                }
+
+            } catch (IOException | InterruptedException e) {
+                if (attempt == maxRetries - 1) {
+                    return "ERROR: Could not establish a connection to the AI engine backend. Please check your network.";
+                }
+            }
+            attempt++;
+        }
+
+        return "ERROR: The server is currently experiencing high demand. Please try again later.";
+    }
+
+	/**
+	 * Extracts the text response from Gemini's JSON structure.
+	 *
+	 * @param jsonResponseBody Raw JSON response from Gemini
+	 * @return The formatted output message
+	 */
+	private String parseGeminiResponse(String jsonResponseBody) {
 		try {
-			HttpRequest request = HttpRequest.newBuilder()
-					.uri(URI.create(OLLAMA_ENDPOINT))
-					.header("Content-Type", "application/json")
-					.POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-					.timeout(Duration.ofSeconds(90))
-					.build();
-			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+			int textMarker = jsonResponseBody.indexOf("\"text\": \"");
+			if (textMarker == -1)
+				return jsonResponseBody;
 
-			if (response.statusCode() == 200) {
-				return parseResponseField(response.body());
-			} else {
-				System.out.println(response.body());
-				return "{\"error\": \"Server returned status code: " + response.statusCode() + "\"}";
+			int startIndex = textMarker + 9;
+			int endIndex = startIndex;
+
+			boolean escaped = false;
+			while (endIndex < jsonResponseBody.length()) {
+				char c = jsonResponseBody.charAt(endIndex);
+				if (c == '\\' && !escaped) {
+					escaped = true;
+				} else if (c == '"' && !escaped) {
+					break;
+				} else {
+					escaped = false;
+				}
+				endIndex++;
 			}
-		} catch (IOException | InterruptedException e) {
-			return "{\"error\": \"Could not establish a connection to the AI engine " +
-					"backend.\"}";
+
+			String rawText = jsonResponseBody.substring(startIndex, endIndex);
+			return rawText.replace("\\n", "\n")
+					.replace("\\\"", "\"")
+					.replace("\\\\", "\\");
+		} catch (Exception e) {
+			return jsonResponseBody;
 		}
 	}
 
 	/**
-	 * Extracts the AI's output message from the response json and unescapes the
-	 * formatting to properly contain the message
+	 * Escapes special characters for JSON formatting.
 	 *
-	 * @param json Raw JSON response from the AI
-	 * @return The formatted output message
+	 * @param input Formatted output message
+	 * @return Formatted output message wih escaping
 	 */
-	private String parseResponseField(String json) {
-		try {
-			int keyIndex = json.indexOf("\"response\":\"");
-			if (keyIndex != -1) {
-				int start = keyIndex + 12;
-				int end = json.indexOf("\",\"", start);
-				if (end == -1) {
-					end = json.indexOf("\"}", start);
-				}
-				if (end != -1) {
-					String rawOutput = json.substring(start, end);
-					return rawOutput.replace("\\n", "\n")
-							.replace("\\\"", "\"")
-							.replace("\\\\", "\\");
-				}
-			}
-			return json;
-		} catch (Exception e) {
-			return json;
-		}
+	private String escapeJson(String input) {
+		return input.replace("\\", "\\\\")
+				.replace("\"", "\\\"")
+				.replace("\n", "\\n")
+				.replace("\r", "\\r")
+				.replace("\t", "\\t");
 	}
 }
